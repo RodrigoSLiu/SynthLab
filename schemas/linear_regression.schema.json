@@ -1,0 +1,154 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Synthetic Linear Regression Spec",
+    "type": "object",
+    "required": ["variables", "assumptions", "validation"],
+    "additionalProperties": false,
+
+    "properties": {
+        "variables": {
+            "type": "object",
+            "required": ["x", "y"],
+            "properties": {
+                "x": {
+                "type": "object",
+                "properties": {
+                    "type": { "const": "float" }
+                },
+                "required": ["type"],
+                "additionalProperties": false
+                },
+                "y": {
+                "type": "object",
+                "properties": {
+                    "type": { "const": "float" }
+                },
+                "required": ["type"],
+                "additionalProperties": false
+                }
+            },
+            "additionalProperties": false
+        },
+
+        "assumptions": {
+            "type": "object",
+            "required": ["marginals", "relationships"],
+            "additionalProperties": false,
+            "properties": {
+                "marginals": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 1,
+                    "items": {
+                        "type": "object",
+                        "required": ["variable", "distribution", "params"],
+                        "properties": {
+                            "variable": { "const": "x" },
+                            "distribution": { "const": "uniform" },
+                            "params": {
+                                "type": "object",
+                                "required": ["min", "max"],
+                                "properties": {
+                                    "min": { "type": "number" },
+                                    "max": { "type": "number" }
+                                },
+                                "additionalProperties": false
+                            }
+                        },
+                        "additionalProperties": false
+                    }
+                },
+
+                "relationships": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "type",
+                            "independent",
+                            "dependent",
+                            "slope",
+                            "noise"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                            "type": {
+                                "type": "string",
+                                "enum": ["linear"]
+                            },
+                            "independent": {
+                                "type": "string"
+                            },
+                            "dependent": {
+                                "type": "string"
+                            },
+                            "slope": {
+                                "type": "number"
+                            },
+                            "noise": {
+                                "type": "object",
+                                "required": ["distribution", "params"],
+                                "additionalProperties": false,
+                                "properties": {
+                                    "distribution": {
+                                        "type": "string",
+                                        "enum": ["normal"]
+                                    },
+                                    "params": {
+                                        "type": "object",
+                                        "required": ["mean", "std"],
+                                        "additionalProperties": false,
+                                        "properties": {
+                                            "mean": { "type": "number" },
+                                            "std": {
+                                                "type": "number",
+                                                "exclusiveMinimum": 0
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+
+        "validation": {
+            "type": "object",
+            "required": ["distribution_test", "relationship_tolerance"],
+            "additionalProperties": false,
+            "properties": {
+                "distribution_test": {
+                    "type": "object",
+                    "required": ["test", "alpha"],
+                    "additionalProperties": false,
+                    "properties": {
+                        "test": {
+                            "type": "string",
+                            "enum": ["ks"]
+                        },
+                        "alpha": {
+                            "type": "number",
+                            "exclusiveMinimum": 0,
+                            "exclusiveMaximum": 1
+                        }
+                    }
+                },
+
+                "relationship_tolerance": {
+                    "type": "object",
+                    "required": ["slope"],
+                    "additionalProperties": false,
+                    "properties": {
+                        "slope": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
