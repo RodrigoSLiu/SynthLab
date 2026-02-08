@@ -55,6 +55,7 @@ def load_spec(name: str) -> dict:
 
 def extract_yaml(llm_output: str) -> str:
     fenced = re.search(r"```yaml\s*(.*?)\s*```", llm_output, re.DOTALL)
+    
     if fenced:
         return fenced.group(1).strip()
 

@@ -1,28 +1,28 @@
 variables:
-  x:
-    type: float
-  y:
-    type: float
+    x:
+        type: float
+    y:
+        type: float
 assumptions:
-  marginals:
-  - variable: x
-    distribution: uniform
-    params:
-      min: 0
-      max: 1
-  relationships:
-  - type: linear
-    independent: x
-    dependent: y
-    slope: 2
-    noise:
-      distribution: normal
-      params:
-        mean: 0
-        std: 1
+    marginals:
+        - variable: x
+          distribution: uniform
+          params:
+              min: 0
+              max: 1
+    relationships:
+        - type: linear
+          independent: x
+          dependent: y
+          slope: 2
+          noise:
+              distribution: normal
+              params:
+                  mean: 0
+                  std: 1
 validation:
-  distribution_test:
-    test: ks
-    alpha: 0.05
-  relationship_tolerance:
-    slope: 0.2
+    distribution_test:
+        test: ks
+        alpha: 0.05
+    relationship_tolerance:
+        slope: 0.2

@@ -1,4 +1,4 @@
-from src.validation.validator import ValidationError
+from src.validation.validator import ValidatorError
 import os
 
 
@@ -8,7 +8,7 @@ def create_code_generation_prompt():
 def add_examples_to_prompt():
     return
 
-def handle_validation_error(e: ValidationError):
+def handle_validation_error(e: ValidatorError):
     if os.getenv("DEBUG"):
         print(e.details)
 
