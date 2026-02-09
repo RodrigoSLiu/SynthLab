@@ -5,7 +5,7 @@ import os
 import yaml
 
 from src.domain.contract import Contract
-from src.llm.prompts import create_spec_prompt
+from src.llm.prompts import create_spec_prompt, create_yaml_error_prompt
 
 class LLMError(Exception):
     pass
@@ -25,6 +25,15 @@ class OllamaClient():
 
         return response
     
+    async def regenerate_spec_from_error(self, error, invalid_yaml:str) -> str:
+        if not (error or invalid_yaml):
+            raise LLMError("Error or prompt not specified")
+        
+        prompt = create_yaml_error_prompt(error, invalid_yaml)
+        print(prompt)
+        response = await self._get_llm_response(prompt)
+
+        return response
 
     async def generate_code(self, code_prompt:str) -> str:
         if not code_prompt.strip():

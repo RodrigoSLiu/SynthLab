@@ -26,6 +26,44 @@ def create_spec_prompt(schema, intent) -> str:
 
                 Generate the YAML specification now.
                 """
+
+def create_yaml_error_prompt(error, invalid_yaml) -> str:
+    return f"""
+                You previously generated a YAML specification, but it is INVALID YAML and failed to parse.
+
+                This is a SYNTAX ERROR ONLY.
+                The content and meaning of the YAML are correct — only formatting is wrong.
+
+                ### ❌ Error
+                YAML_PARSE_ERROR:
+                {error}
+
+                ### ❌ Invalid YAML (DO NOT REPEAT AS-IS)
+                {invalid_yaml}
+
+                ---
+
+                ### Your task
+
+                Fix the YAML so that it is:
+                - Valid YAML
+                - Parsable by yaml.safe_load
+                - Semantically identical to the original
+
+                ### STRICT RULES (IMPORTANT)
+
+                - Output ONLY valid YAML
+                - DO NOT include explanations, comments, or markdown
+                - DO NOT wrap the output in ``` or any formatting
+                - DO NOT change field names, values, or structure
+                - DO NOT add or remove keys
+                - DO NOT infer or introduce new assumptions
+                - Fix ONLY indentation, tokens, quoting, or formatting errors
+
+                If you include anything other than valid YAML, the output will be rejected.
+
+                Return the corrected YAML now.
+            """
     
 def create_code_prompt(contract) -> str:
     return f"""

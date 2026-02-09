@@ -13,41 +13,54 @@ import asyncio
 
 
 async def get_spec_with_retry(llm, validator, schema, intent, retry=3):
+    failed = False
+    yaml = ''
+    prompt_on_fail = ''
+    error = ''
+
     for i in range(retry):
-        try:
-            print(f"Trying {i+1}/{retry}...")
+        print(f"Trying {i+1}/{retry}...")
+        if failed:
+            print("YAML validation failed, re-running...")
+            llm_spec = await llm.regenerate_spec_from_error(error, yaml)
+        else:
             #llm_spec = await llm.generate_spec_from_intent(schema, intent)
-            llm_spec = """
-                `variables:
-                x:
-                    type: float
-                y:
-                    type: float
-                assumptions:
-                marginals:
-                - variable: x
-                    distribution: uniform
-                    params:
-                    min: 0
-                    max: 1
-                relationships:
-                - type: linear
-                    independent: x
-                    dependent: y
-                    slope: 2
-                    noise:
-                    distribution: normal
-                    params:
-                        mean: 0
-                        std: 1
-                validation:
-                distribution_test:
-                    test: ks
-                    alpha: 0.05
-                relationship_tolerance:
-                    slope: 0.2
-                """
-            print(llm_spec)
+            pass
+
+        #WRONG SPEC
+        llm_spec = """
+            `variables:
+            x:
+                type: float
+            y:
+                type: float
+            assumptions:
+            marginals:
+            - variable: x
+                distribution: uniform
+                params:
+                min: 0
+                max: 1
+            relationships:
+            - type: linear
+                independent: x
+                dependent: y
+                slope: 2
+                noise:
+                distribution: normal
+                params:
+                    mean: 0
+                    std: 1
+            validation:
+            distribution_test:
+                test: ks
+                alpha: 0.05
+            relationship_tolerance:
+                slope: 0.2
+            """
+        print(llm_spec)
+
+        try:
 
             print("#### EXTRACTED YAML #####")
             yaml = extract_yaml(llm_spec)
@@ -56,12 +69,17 @@ async def get_spec_with_retry(llm, validator, schema, intent, retry=3):
 
             print("#### VALIDATED SPEC #####")
             spec = validator.validate_yaml(yaml)
-            print(spec)
             print()
 
+
             return
+        
         except ValidatorError as e:
+            failed = True
+
+            print("Validator raised error")
             print(e)
+            error = e
 
 async def run_pipeline():
     schema = load_schema("linear_regression.schema.json")
@@ -81,7 +99,7 @@ async def run_pipeline():
     await get_spec_with_retry(llm, validator, schema, intent, retry=3)
 
 
-    if os.getenv("DEBUG"):
+    if not os.getenv("DEBUG"):
         print("#### LLM SPEC #####")
         #llm_spec = await llm.generate_spec_from_intent(schema, intent)
         #TODO test
