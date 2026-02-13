@@ -1,29 +1,16 @@
-from typing import Any, Dict
-import yaml
-import jsonschema
-
+from src.validation.errors import SpecValidatorError
 from src.domain.contract import Contract
 
+from typing import Any, Dict
+import logging
+import yaml
+import jsonschema
+import pandas as pd
 
-class ValidatorError(Exception):
-    """Raised when contract validation fails."""
+logger = logging.getLogger(__name__)
 
-    def __init__(self, error_type: str, details: Dict[str, Any]):
-        self.error_type = error_type
-        self.details = details
-        super().__init__(self._format_message())
 
-    def _format_message(self) -> str:
-        return f"{self.error_type}: {self.details}"
-
-    @staticmethod
-    def create_error_json(error_type: str, **kwargs) -> Dict[str, Any]:
-        return {
-            "error_type": error_type,
-            "details": kwargs,
-        }
-
-class Validator:
+class SpecValidator:
     def __init__(self, schema: Dict[str, Any]):
         self.schema = schema
 
@@ -33,12 +20,14 @@ class Validator:
         Returns parsed spec dict if valid.
         """
         # Parse YAML
+        logger.info("Validating Spec...")
+
         try:
             spec = yaml.safe_load(yaml_text)
         except yaml.YAMLError as e:
-            raise ValidatorError(
+            raise SpecValidatorError(
                 "YAML_PARSE_ERROR",
-                ValidatorError.create_error_json(
+                SpecValidatorError.create_error_json(
                     "YAML_PARSE_ERROR",
                     message=str(e),
                     received=yaml_text,
@@ -49,15 +38,17 @@ class Validator:
         try:
             jsonschema.validate(instance=spec, schema=self.schema)
         except jsonschema.ValidationError as e:
-            raise ValidatorError(
+            raise SpecValidatorError(
                 "SCHEMA_VALIDATION_ERROR",
-                ValidatorError.create_error_json(
+                SpecValidatorError.create_error_json(
                     "SCHEMA_VALIDATION_ERROR",
                     message=str(e),
                     path=list(e.path),
                     schema_path=list(e.schema_path),
                 ),
             )
+        
+        logger.info("Spec is valid")
 
         return spec
     
@@ -70,9 +61,9 @@ class Validator:
         # Marginal variable exists
         for marginal in spec["assumptions"]["marginals"]:
             if marginal["variable"] not in variables:
-                raise ValidatorError(
+                raise SpecValidatorError(
                     "SCHEMA_VALIDATION_ERROR",
-                    ValidatorError.create_error_json(
+                    SpecValidatorError.create_error_json(
                         "SCHEMA_VALIDATION_ERROR",
                         message=f"Marginal variable '{marginal['variable']}' not defined",
                     ),
@@ -81,17 +72,17 @@ class Validator:
         # Relationship variables exist
         for rel in spec["assumptions"]["relationships"]:
             if rel["independent"] not in variables:
-                raise ValidatorError(
+                raise SpecValidatorError(
                         "SCHEMA_VALIDATION_ERROR",
-                        ValidatorError.create_error_json(
+                        SpecValidatorError.create_error_json(
                             "SCHEMA_VALIDATION_ERROR",
                             message=f"Independent variable '{rel['independent']}' not defined",
                         ),
                     )
             if rel["dependent"] not in variables:
-                raise ValidatorError(
+                raise SpecValidatorError(
                     "SCHEMA_VALIDATION_ERROR",
-                    ValidatorError.create_error_json(
+                    SpecValidatorError.create_error_json(
                         "SCHEMA_VALIDATION_ERROR",
                         message= f"Dependent variable '{rel['dependent']}' not defined"
                     ),

@@ -1,7 +1,9 @@
+from src.domain.contract import Contract
+
 import json 
 
 
-def create_spec_prompt(schema, intent) -> str:
+def create_spec_prompt(schema:str, intent: str) -> str:
     schema_text = json.dumps(schema, indent=2)
 
     return f"""
@@ -15,6 +17,13 @@ def create_spec_prompt(schema, intent) -> str:
                 - Do NOT invent fields not defined in the schema.
                 - Do NOT omit required fields.
                 - All values must respect the types and constraints defined in the schema.
+                
+                STRICT SERIALIZATION RULES:
+                - Use YAML BLOCK STYLE ONLY
+                - DO NOT use inline or flow-style objects (no parenthesis)
+                - Every key-value pair must be on its own line
+                - Indentation must be exactly 2 spaces
+                - Lists must use '-' on a new line
                 ALL VARIABLES INVOLVED IN CONTINUOUS DISTRIBUTIONS OR ADDITIVE NOISE MUST HAVE TYPE float.
                 DO NOT USE int FOR ANY VARIABLE IN THIS SPEC.
                 
@@ -27,7 +36,7 @@ def create_spec_prompt(schema, intent) -> str:
                 Generate the YAML specification now.
                 """
 
-def create_yaml_error_prompt(error, invalid_yaml) -> str:
+def create_yaml_error_prompt(error, invalid_yaml: str) -> str:
     return f"""
                 You previously generated a YAML specification, but it is INVALID YAML and failed to parse.
 
@@ -65,7 +74,7 @@ def create_yaml_error_prompt(error, invalid_yaml) -> str:
                 Return the corrected YAML now.
             """
     
-def create_code_prompt(contract) -> str:
+def create_code_prompt(contract: Contract) -> str:
     return f"""
                 You are generating Python code for a synthetic data generator.
 

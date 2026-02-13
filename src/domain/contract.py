@@ -24,6 +24,6 @@ class Contract:
         return cls(
             variables=spec["variables"],
             marginals=spec["assumptions"]["marginals"],
-            relationships=spec["assumptions"]["relationships"],
+            relationships=spec["relationships"],
             validation=spec["validation"],
         )

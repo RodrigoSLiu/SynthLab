@@ -1,5 +1,8 @@
-from src.validation.validator import ValidatorError
-import os
+from src.validation.spec_validator import SpecValidatorError
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def create_code_generation_prompt():
@@ -8,8 +11,7 @@ def create_code_generation_prompt():
 def add_examples_to_prompt():
     return
 
-def handle_validation_error(e: ValidatorError):
-    if os.getenv("DEBUG"):
-        print(e.details)
+def handle_spec_validation_error(e: SpecValidatorError):
+    logger.debug(e.details)
 
     return

@@ -1,7 +1,7 @@
 import pytest
 import yaml
 
-from src.validation.validator import Validator, ValidationError
+from validation.spec_validator import Validator, ValidationError
 from src.domain.contract import Contract
 from src.utils.utils import load_schema
 

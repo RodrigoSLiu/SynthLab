@@ -36,7 +36,23 @@ The system does not trust LLM outputs by default — correctness is enforced thr
 
 ## Core Flow
 
-Intent → Spec file creation (User)→ Contract creation (LLM) → Code draft (LLM) → Review (User) → Safe execution → Validation → Comparison / result
+User intent
+   ↓
+LLM
+   ↓
+YAML spec (untrusted)
+   ↓
+SpecValidator 
+   ↓
+Contract (trusted)
+   ↓
+Code generation
+   ↓
+Data generation
+   ↓
+DatasetValidator
+   ↓
+Results / report
 
 ---
 
@@ -76,36 +92,6 @@ Included:
 | Execution sandbox   | Safe execution of generated code | Python AST                      |
 | Validation engine   | Statistical validation           | scipy.stats + custom validators |
 | Experiment tracking | Store results & comparisons      | JSON                            |
-
----
-
-## Project Structure
-
-synthetic-data-lab/
-├── README.md
-├── requirements.txt
-├── data/
-│ ├── input/
-│ │ └── alleles.csv
-│ └── output/
-│ └── (generated datasets)
-├── src/
-│ ├── llm/
-│ │ └── generate_code.py
-│ ├── execution/
-│ │ └── sandbox.py
-│ ├── validation/
-│ │ └── validators.py
-│ └── pipeline.py
-├── specs/
-│ └── genomic_generation.yaml
-├── experiments/
-│ └── exp_001_baseline/
-│ ├── intent.txt
-│ ├── generated_code.py
-│ ├── results.json
-│ └── notes.md
-└── notes/
 
 ---
 

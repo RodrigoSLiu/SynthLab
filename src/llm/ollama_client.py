@@ -1,19 +1,22 @@
 from ollama import chat
 from ollama import ChatResponse
 from typing import Dict
-import os
+import logging
 import yaml
 
 from src.domain.contract import Contract
-from src.llm.prompts import create_spec_prompt, create_yaml_error_prompt
+from src.llm.prompts import create_spec_prompt, create_yaml_error_prompt, create_code_prompt
+
+logger = logging.getLogger(__name__)
 
 class LLMError(Exception):
     pass
 
 
 class OllamaClient():
-    def __init__(self, model):
-        self.model = model
+    def __init__(self, spec_model, code_model):
+        self.spec_model = spec_model
+        self.code_model = code_model
         self.context = None
     
     async def generate_spec_from_intent(self, schema, intent:str) -> str:
@@ -21,7 +24,7 @@ class OllamaClient():
             raise LLMError("User intent is empty")
         
         prompt = create_spec_prompt(schema, intent)
-        response = await self._get_llm_response(prompt)
+        response = await self._get_llm_response(self.spec_model, prompt)
 
         return response
     
@@ -30,28 +33,31 @@ class OllamaClient():
             raise LLMError("Error or prompt not specified")
         
         prompt = create_yaml_error_prompt(error, invalid_yaml)
-        print(prompt)
-        response = await self._get_llm_response(prompt)
+        response = await self._get_llm_response(self.spec_model, prompt)
 
         return response
 
-    async def generate_code(self, code_prompt:str) -> str:
-        if not code_prompt.strip():
-            raise LLMError("Prompt is empty")
+    async def generate_code_from_spec(self, contract: Contract) -> str:
+        if not contract:
+            raise LLMError("Contract is missing or not valid")
         
-        response = await self._get_llm_response(code_prompt)
+        prompt = create_code_prompt(contract)
+        response = await self._get_llm_response(self.code_model, prompt)
         
         return response
     
-    async def _get_llm_response(self, prompt):
-        response: ChatResponse = chat(model=self.model, messages=[
+    async def _get_llm_response(self, chosen_model, prompt):
+        response: ChatResponse = chat(model=chosen_model, messages=[
             {
                 'role': 'user',
                 'content': f'{prompt}',
             },
         ])
-        if os.getenv("DEBUG"):
-            print(f"User: {prompt[:50]}(...)")
-            print(f"Ollama: {response['message']['content']}")
+        logger.debug("#### USER ####")
+        logger.debug("User: %s(...)", prompt)
+        logger.debug("############")
+        logger.debug("#### OLLAMA ####")
+        logger.debug("Ollama: %s", response['message']['content'])
+        logger.debug("############")
 
         return response['message']['content']
