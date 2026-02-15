@@ -1,5 +1,4 @@
 import numpy as np
-
 def relationship_generation(num_samples, seed):
     rng = np.random.default_rng(seed)
     x = rng.uniform(0, 1, num_samples)

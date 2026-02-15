@@ -73,8 +73,8 @@ async def run_pipeline():
     executor = Executor()
 
     intent = (
-        "Generate a dataset with x uniformly distributed between 0 and 1 "
-        "and y following y = 2x with additive Gaussian noise. "
+        "Generate a dataset with x uniformly distributed between 0 and 1"
+        "and y following y = 2x with additive Gaussian noise."
         "Validate the distribution of x and the slope of the relationship."
     )
 
@@ -98,7 +98,6 @@ async def run_pipeline():
 
     logger.info("Executing code...")
     results = executor.execute_generated_code(code, 10000, 42)
-    print(results)
     x, y = results
     dataframe = build_dataframe(x, y)
     save_dataset_csv(dataframe, "experiments/dataset.csv")

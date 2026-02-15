@@ -146,6 +146,11 @@ class DatasetValidator:
         tolerance = tolerance_config["slope"]
 
         slope, intercept, r_value, p_value, stderr = linregress(x, y)
+        logging.info(f"Slope: {slope}")
+        logging.info(f"Intercept: {intercept}")
+        logging.info(f"r_value: {r_value}")
+        logging.info(f"p_value: {p_value}")
+        logging.info(f"Stderr: {stderr}")
 
         logger.debug(f"Observed slope: {slope}")
 

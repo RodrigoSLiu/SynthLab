@@ -25,4 +25,4 @@ validation:
     test: ks
     alpha: 0.05
   relationship_tolerance:
-    slope: 0.98
+    slope: 0.1
