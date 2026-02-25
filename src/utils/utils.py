@@ -20,6 +20,7 @@ def write_generated_code(code: str, output_path: Union[str, Path]) -> None:
     with path.open("w", encoding="utf-8") as f:
         f.write(code)
 
+
 def write_generated_yaml(spec: Dict[str, Any], output_path: Union[str, Path]) -> None:
     if not isinstance(spec, dict) or not spec:
         raise ValueError("Generated spec is empty or invalid")
@@ -34,6 +35,7 @@ def write_generated_yaml(spec: Dict[str, Any], output_path: Union[str, Path]) ->
     with path.open("w", encoding="utf-8") as f:
         yaml.safe_dump(spec, f, sort_keys=False)
 
+
 def load_schema(name: str) -> dict:
     path = Path("schemas") / name
     
@@ -43,6 +45,7 @@ def load_schema(name: str) -> dict:
     except:
         raise FileNotFoundError(f"Path {path} does not exist")
 
+
 def load_spec(name: str) -> dict:
     path = Path("specs") / name
     
@@ -51,6 +54,7 @@ def load_spec(name: str) -> dict:
             return yaml.safe_load(f)
     except:
         raise FileNotFoundError(f"Path {path} does not exist")
+
 
 def extract_content_from_response(text: str) -> str:
     # Find ```yaml fenced block
@@ -69,11 +73,10 @@ def extract_content_from_response(text: str) -> str:
 
     return text.strip()
 
-def build_dataframe(x, y):
-    return pd.DataFrame({
-        "x": x,
-        "y": y,
-    })
+
+def dict_to_dataframe(data: dict) -> pd.DataFrame:
+    return pd.DataFrame(data)
+
 
 def save_dataset_csv(df: pd.DataFrame, output_path: str) -> None:
     if not isinstance(df, pd.DataFrame):
@@ -90,6 +93,7 @@ def save_dataset_csv(df: pd.DataFrame, output_path: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
 
     df.to_csv(path, index=False)
+
 
 def load_dataset_csv(path: Union[str, Path]) -> pd.DataFrame:
     path = Path(path)

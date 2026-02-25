@@ -14,7 +14,7 @@ def sample_contract():
         marginals=[{
             "variable": "x",
             "distribution": "uniform",
-            "params": {"min": 0.0, "max": 1.0}
+            "params": {"low": 0.0, "high": 1.0}
         }],
         relationships=[{
             "type": "linear",
@@ -42,7 +42,7 @@ def sample_spec():
             "marginals": [{
                 "variable": "x",
                 "distribution": "uniform",
-                "params": {"min": 0.0, "max": 1.0}
+                "params": {"low": 0.0, "high": 1.0}
             }],
             "relationships": [{
                 "type": "linear",
@@ -76,8 +76,8 @@ assumptions:
     - variable: x
       distribution: uniform
       params:
-        min: 0.0
-        max: 1.0
+        low: 0.0
+        high: 1.0
   relationships:
     - type: linear
       independent: x
@@ -103,13 +103,3 @@ def linear_regression_schema():
     return load_schema("linear_regression.schema.json")
 
 
-@pytest.fixture
-def sample_generated_code():
-    """Return sample generated Python code."""
-    return """def relationship_generation(num_samples, seed):
-    import numpy as np
-    rng = np.random.default_rng(seed)
-    x = rng.uniform(0, 1, num_samples)
-    y = 2.0 * x + rng.normal(0, 1, num_samples)
-    return x, y
-"""

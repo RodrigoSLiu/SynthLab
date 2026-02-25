@@ -1,4 +1,4 @@
-from src.validation.errors import SpecValidatorError
+from src.core.errors import SpecValidatorError
 from src.domain.contract import Contract
 
 from typing import Any, Dict
@@ -27,11 +27,10 @@ class SpecValidator:
         except yaml.YAMLError as e:
             raise SpecValidatorError(
                 "YAML_PARSE_ERROR",
-                SpecValidatorError.create_error_json(
-                    "YAML_PARSE_ERROR",
-                    message=str(e),
-                    received=yaml_text,
-                ),
+                {
+                    "message": str(e),
+                    "received": yaml_text
+                },
             )
 
         # Validate schema
@@ -40,12 +39,11 @@ class SpecValidator:
         except jsonschema.ValidationError as e:
             raise SpecValidatorError(
                 "SCHEMA_VALIDATION_ERROR",
-                SpecValidatorError.create_error_json(
-                    "SCHEMA_VALIDATION_ERROR",
-                    message=str(e),
-                    path=list(e.path),
-                    schema_path=list(e.schema_path),
-                ),
+                {
+                    "message": str(e),
+                    "path": list(e.path),
+                    "schema_path": list(e.schema_path)
+                },
             )
         
         logger.info("Spec is valid")
@@ -63,10 +61,9 @@ class SpecValidator:
             if marginal["variable"] not in variables:
                 raise SpecValidatorError(
                     "SCHEMA_VALIDATION_ERROR",
-                    SpecValidatorError.create_error_json(
-                        "SCHEMA_VALIDATION_ERROR",
-                        message=f"Marginal variable '{marginal['variable']}' not defined",
-                    ),
+                    {
+                        "message": f"Marginal variable '{marginal['variable']}' not defined",
+                    }
                 )
 
         # Relationship variables exist
@@ -74,18 +71,17 @@ class SpecValidator:
             if rel["independent"] not in variables:
                 raise SpecValidatorError(
                         "SCHEMA_VALIDATION_ERROR",
-                        SpecValidatorError.create_error_json(
-                            "SCHEMA_VALIDATION_ERROR",
-                            message=f"Independent variable '{rel['independent']}' not defined",
-                        ),
+                        {
+                            "message": f"Independent variable '{rel['independent']}' not defined",
+                        }
                     )
+
             if rel["dependent"] not in variables:
                 raise SpecValidatorError(
                     "SCHEMA_VALIDATION_ERROR",
-                    SpecValidatorError.create_error_json(
-                        "SCHEMA_VALIDATION_ERROR",
-                        message= f"Dependent variable '{rel['dependent']}' not defined"
-                    ),
+                    {
+                        "message": f"Dependent variable '{rel['dependent']}' not defined"
+                    }
                 )
 
     def validate_contract(self, yaml_text: str) -> Contract:

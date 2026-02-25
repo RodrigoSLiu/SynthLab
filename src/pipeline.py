@@ -2,8 +2,8 @@ from src.llm.ollama_client import OllamaClient
 from src.domain.contract import Contract
 from src.validation.spec_validator import SpecValidator
 from src.validation.dataset_validator import DatasetValidator
-from src.validation.errors import SpecValidatorError
-from src.utils.utils import write_generated_code, load_schema, extract_content_from_response, write_generated_yaml, build_dataframe, save_dataset_csv, load_dataset_csv
+from src.core.errors import SpecValidatorError
+from src.utils.utils import write_generated_code, load_schema, extract_content_from_response, write_generated_yaml, save_dataset_csv, load_dataset_csv
 from src.llm.prompts import create_code_prompt
 from src.execution.executor import Executor
 
@@ -13,6 +13,8 @@ import json
 import os
 import asyncio
 import logging
+import argparse
+
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +23,7 @@ async def get_spec_with_retry(
     validator: SpecValidator,
     schema: Dict[str, Any],
     intent: str,
-    retry: int = 3,
+    retry: int = 1,
 ) -> Dict[str, Any]:
 
     yaml_text: str = ""
@@ -35,6 +37,7 @@ async def get_spec_with_retry(
             llm_spec = await llm.regenerate_spec_from_error(last_error, yaml_text)
         else:
             llm_spec = await llm.generate_spec_from_intent(schema, intent)
+            pass
 
         try:
             logger.info("#### EXTRACTED YAML #####")
@@ -63,7 +66,7 @@ async def get_spec_with_retry(
 
 
 async def run_pipeline():
-    schema = load_schema("linear_regression.schema.json")
+    schema = load_schema("specification.schema.json")
     spec_validator = SpecValidator(schema)
 
     spec_model_name = os.getenv("SPEC_LLM_MODEL")
@@ -73,40 +76,48 @@ async def run_pipeline():
     executor = Executor()
 
     intent = (
-        "Generate a dataset with x uniformly distributed between 0 and 1"
-        "and y following y = 2x with additive Gaussian noise."
-        "Validate the distribution of x and the slope of the relationship."
-    )
+        '''I have a regression model that assumes additive feature effects.
+        I want to test whether it fails when the true data-generating process contains multiplicative feature interactions.
 
-    spec = await get_spec_with_retry(llm, spec_validator, schema, intent, retry=3)
+        Generate a dataset where:
+        • x1 follows a normal distribution with mean 0 and standard deviation 1.
+        • x2 follows a uniform distribution between -1 and 1.
+        • y is defined as y = 1.2*x1 + 0.8*x2 + 2.0*(x1*x2).
+        • The relationship must be fully deterministic.
+        • Validate that both marginals match their specified distributions.
+        • Validate that the interaction coefficient matches 2.0 within tolerance.
+        '''
+    )
+    
+    if args.filename:
+        with open(f"specs/{args.filename}", "r", encoding="utf-8") as f:
+            yaml_text = f.read()
+
+        spec = spec_validator.validate_yaml(yaml_text)
+    else:
+        spec = await get_spec_with_retry(llm, spec_validator, schema, intent, retry=3)
+
     try:
         logger.info("Writing yaml...")
         write_generated_yaml(spec, "specs/test.yaml")
         contract = Contract.from_spec(spec)
     except ValueError as e:
         logger.error("Spec generation failed: %s", e)
-    
-    llm_code = await llm.generate_code_from_spec(contract)
-    code = extract_content_from_response(llm_code)
 
-    if not code:
-        #TODO Change this error 
-        raise ValueError("Failed code extraction")
-    
-    logger.info("Writing code...")
-    write_generated_code(code, "experiments/code.py")
+    #logger.info("Writing code...")
+    #write_generated_code(code, "experiments/code.py")
 
-    logger.info("Executing code...")
-    results = executor.execute_generated_code(code, 10000, 42)
-    x, y = results
-    dataframe = build_dataframe(x, y)
+    #logger.info("Executing code...")
+    dataframe = executor.execute_spec(contract, 10000, 42)
+    logger.info(len(dataframe))
     save_dataset_csv(dataframe, "experiments/dataset.csv")
-    #executor.visualize_data(results)
+
     
     contract = Contract.from_spec(spec)
     dataset_validator = DatasetValidator(contract)
 
     df = load_dataset_csv("experiments/dataset.csv")
+    executor.visualize_data(df)
     validated = dataset_validator.validate_dataset(df)
 
     if validated:
@@ -120,9 +131,13 @@ async def main():
         #format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
         format="%(levelname)s | %(name)s | %(message)s"
     )
+    logging.getLogger("matplotlib").setLevel(logging.WARNING)
 
     load_dotenv()
     await run_pipeline()
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(prog='SynthLab')
+    parser.add_argument('-f', '--filename')
+    args = parser.parse_args()
     asyncio.run(main())

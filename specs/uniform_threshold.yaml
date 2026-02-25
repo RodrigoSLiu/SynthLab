@@ -1,0 +1,36 @@
+variables:
+  x:
+    type: continuous
+  y:
+    type: continuous
+
+assumptions:
+  marginals:
+    - variable: x
+      generator:
+        name: uniform
+        params:
+          low: 0.0
+          high: 1.0
+
+relationships:
+  - target: y
+    inputs: [x]
+    function:
+      name: piecewise_linear
+      params:
+        breakpoints: [0.5]
+        slopes: [0.0, 0.0]
+        intercepts: [0.0, 1.0]
+
+validation:
+  - type: distribution
+    variable: x
+    test: ks
+    alpha: 0.05
+
+  - type: slope
+    target: y
+    inputs: [x]
+    expected: 0.0
+    tolerance: 0.5
