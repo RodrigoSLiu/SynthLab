@@ -101,8 +101,8 @@ class DatasetValidator:
         alpha = validation_config["alpha"]
 
         if distribution == "uniform":
-            min_val = params["min"]
-            max_val = params["max"]
+            min_val = params["low"]
+            max_val = params["high"]
 
             # scale to 0-1 for KS test
             scaled = (array - min_val) / (max_val - min_val)

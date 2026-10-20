@@ -1,0 +1,41 @@
+variables:
+  x:
+    type: continuous
+  y:
+    type: continuous
+
+assumptions:
+  marginals:
+    - variable: x
+      generator:
+        name: beta
+        params:
+          alpha: 2.0
+          beta: 5.0
+
+relationships:
+  - target: y
+    inputs: [x]
+    function:
+      name: linear
+      params:
+        coefficients:
+          x: 4.0
+        intercept: -1.0
+    noise:
+      name: normal
+      params:
+        mean: 0.0
+        std: 0.1
+
+validation:
+  - type: distribution
+    variable: x
+    test: ks
+    alpha: 0.05
+
+  - type: slope
+    target: y
+    inputs: [x]
+    expected: 4.0
+    tolerance: 0.1

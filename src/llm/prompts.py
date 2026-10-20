@@ -7,34 +7,144 @@ def create_spec_prompt(schema:str, intent: str) -> str:
     schema_text = json.dumps(schema, indent=2)
 
     return f"""
-                You are a specification generator.
+            You are a strict YAML specification compiler.
 
-                Your task is to generate a YAML specification that STRICTLY conforms to the JSON Schema provided below.
+            Your task is to translate USER INTENT into a YAML specification that strictly conforms to the provided JSON Schema.
 
-                IMPORTANT RULES:
-                - Output ONLY valid YAML.
-                - Do NOT include explanations, comments, or markdown.
-                - Do NOT invent fields not defined in the schema.
-                - Do NOT omit required fields.
-                - All values must respect the types and constraints defined in the schema.
-                
-                STRICT SERIALIZATION RULES:
-                - Use YAML BLOCK STYLE ONLY
-                - DO NOT use inline or flow-style objects (no parenthesis)
-                - Every key-value pair must be on its own line
-                - Indentation must be exactly 2 spaces
-                - Lists must use '-' on a new line
-                ALL VARIABLES INVOLVED IN CONTINUOUS DISTRIBUTIONS OR ADDITIVE NOISE MUST HAVE TYPE float.
-                DO NOT USE int FOR ANY VARIABLE IN THIS SPEC.
-                
-                JSON SCHEMA (AUTHORITATIVE):
-                {schema_text}
+            The JSON Schema is the sole authority. You must obey it exactly.
 
-                USER INTENT:
-                {intent}
+            ---------------------------------------
+            HARD OUTPUT CONSTRAINTS
+            ---------------------------------------
 
-                Generate the YAML specification now.
-                """
+            - Output ONLY valid YAML.
+            - Do NOT include explanations.
+            - Do NOT include markdown.
+            - Do NOT include comments.
+            - Do NOT wrap output in backticks.
+            - Do NOT include text before or after the YAML.
+            - Use block-style YAML only.
+            - Indentation MUST be exactly 2 spaces per level.
+            - Lists MUST use "-" on new lines.
+            - All field names MUST exactly match the schema.
+            - Do NOT invent fields.
+            - Do NOT omit required fields.
+            - All numeric values MUST be valid numbers.
+
+            ---------------------------------------
+            PRIMITIVE CATEGORIES (STRICT ONTOLOGY)
+            ---------------------------------------
+
+            Marginal generators (assumptions.marginals.generator.name) MUST be one of:
+
+            - uniform
+            - normal
+            - exponential
+            - binomial
+            - beta
+            - gamma
+            - lognormal
+
+            Relationship functions (relationships.function.name) MUST be one of:
+
+            - linear
+            - polynomial
+            - logistic
+            - piecewise_linear
+
+            Noise generators (relationships.noise.name) MUST be:
+
+            - normal
+
+            The following are FORBIDDEN everywhere:
+            - expression
+            - lambda
+            - parametric
+            - function strings
+            - inline math expressions
+
+            ---------------------------------------
+            SECTION RESPONSIBILITIES (STRICT)
+            ---------------------------------------
+
+            1. variables
+            - Only declares variable names and type.
+            - MUST NOT contain generator definitions.
+            - MUST NOT contain distribution parameters.
+            - MUST NOT contain function definitions.
+            - MUST NOT contain params.
+
+            2. assumptions
+            - Defines ONLY marginal distributions.
+            - Only independent (exogenous) variables may appear here.
+            - A variable that appears as a relationship target MUST NOT appear in marginals.
+            - Distribution parameters MUST appear ONLY under:
+                assumptions -> marginals -> generator -> params
+
+            3. relationships
+            - Defines deterministic mappings between variables.
+            - Function parameters MUST appear ONLY under:
+                relationships -> function -> params
+            - Target MUST exist in variables.
+            - Inputs MUST exist in variables.
+            - If no noise is described in intent, DO NOT include a noise field.
+
+            4. validation
+            - Must correspond to existing variables or relationships.
+            - Include only fields required by the validation type.
+            - For polynomial validation:
+                - expected MUST be an array of numbers.
+                - Do NOT wrap expected inside another object.
+            - For slope validation:
+                - expected MUST be a number.
+            - Do NOT include irrelevant fields.
+
+            ---------------------------------------
+            SEMANTIC CONSISTENCY RULES
+            ---------------------------------------
+
+            - Every referenced variable MUST be declared.
+            - No variable may appear in both marginals and as a relationship target.
+            - Marginal generator names MUST be valid distribution names.
+            - Relationship function names MUST be valid function names.
+            - Parameter names MUST match expected primitive conventions:
+                normal distribution uses:
+                    mean
+                    std
+                (NOT std_dev)
+            - If a numeric value is an integer conceptually, still represent it as a float (e.g., 2.0 instead of 2).
+            - All numbers in params, expected values, and tolerances MUST be floats.
+
+            ---------------------------------------
+            MANDATORY INTERNAL VERIFICATION
+            ---------------------------------------
+
+            Before producing output, internally verify:
+
+            - No target variable appears in marginals.
+            - No forbidden primitive names appear.
+            - No distribution parameters appear outside assumptions.
+            - No function parameters appear outside relationships.
+            - All required fields are present.
+            - No duplicated keys.
+            - Validation structure matches schema.
+
+            If any violation exists, correct it before producing final YAML.
+
+            ---------------------------------------
+            JSON SCHEMA (AUTHORITATIVE)
+            ---------------------------------------
+
+            {schema_text}
+
+            ---------------------------------------
+            USER INTENT
+            ---------------------------------------
+
+            {intent}
+
+            Generate the YAML specification now.   
+            """
 
 def create_yaml_error_prompt(error, invalid_yaml: str) -> str:
     return f"""

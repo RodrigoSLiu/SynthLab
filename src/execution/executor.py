@@ -1,15 +1,80 @@
-from experiments.code import relationship_generation
+from src.domain.contract import Contract
+from src.primitives.registry import Registry
 
+from itertools import combinations
+from typing import List, Dict, Any
 import matplotlib.pyplot as plt
+import pandas as pd
 import numpy as np
 import pandas as pd
-from typing import Tuple
+
 
 
 class Executor:
     def __init__(self):
-        return
+        self.registry = Registry()
     
+
+    def execute_spec(self, contract: Contract, num_samples: int, seed: int):
+        variables = contract.get_variables().keys()
+        marginals = contract.get_marginals()
+        relationships = contract.get_relationships()
+
+        registry = Registry()
+        dataset = {}
+
+        dataset_marginals = self._generate_marginals(marginals, num_samples, seed)
+        dataset.update(dataset_marginals)
+        dataset_relationships = self._generate_relationships(dataset, relationships)
+
+        return pd.DataFrame(dataset)
+
+
+    def _generate_marginals(self, marginals: List[Dict[str, Any]], num_samples: int, seed: int) -> Dict[str, np.ndarray]:
+        rng = np.random.default_rng(seed)
+
+        results = {}
+
+        for marg in marginals:
+            variable = marg["variable"]
+            generator_spec = marg["generator"]
+
+            primitive = self.registry.get_distribution(generator_spec["name"])
+            array = primitive.generate(
+                rng=rng,
+                size=num_samples,
+                params=generator_spec["params"]
+            )
+
+            results[variable] = array
+
+        return results
+
+
+    def _generate_relationships(self, dataset: Dict[str, np.ndarray], relationships: List[Dict[str, Any]]):
+        results = {}
+
+        for rel in relationships:
+            target = rel["target"]
+            input_names = rel["inputs"]
+            function_spec = rel["function"]
+
+            primitive = self.registry.get_relationship(function_spec["name"])
+
+            input_arrays = {
+                name: dataset[name] for name in input_names
+            }
+
+            y = primitive.generate(
+                input_arrays,
+                function_spec["params"]
+            )
+
+            dataset[target] = y
+
+        return results
+
+
     @staticmethod
     def execute_generated_code(code: str, num_samples: int, seed: int):
         namespace = {}
@@ -23,23 +88,3 @@ class Executor:
 
         return func(num_samples, seed)
     
-    #TODO Change to another file
-    def visualize_data(self, df) -> None:
-        """
-        Visualize generated synthetic data.
-        Assumes df contains columns 'x' and 'y'.
-        """
-        if df.empty:
-            raise ValueError("Empty DataFrame passed to visualization")
-
-        required_columns = {"x", "y"}
-        if not required_columns.issubset(df.columns):
-            raise ValueError(f"DataFrame must contain columns {required_columns}")
-
-        plt.figure(figsize=(6, 4))
-        plt.scatter(df["x"], df["y"], alpha=0.5, s=10)
-        plt.xlabel("x")
-        plt.ylabel("y")
-        plt.title("Synthetic Data Visualization")
-        plt.tight_layout()
-        plt.show()

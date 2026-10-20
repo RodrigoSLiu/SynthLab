@@ -1,4 +1,7 @@
 from typing import Dict, Any, List
+from src.errors import ContractError
+
+import copy
 
 
 class Contract:
@@ -27,3 +30,41 @@ class Contract:
             relationships=spec["relationships"],
             validation=spec["validation"],
         )
+    
+    def _validate_semantics(self):
+        variables = self.variables
+        marginals = self.marginals
+        relationships = self.relationships
+
+        for marg in marginals:
+            var = marg["variable"]
+
+            if var not in variables:
+                raise ContractError(
+                    error_type="UNKNOWN_VARIABLE_IN_MARGINAL",
+                    details={
+                        "variable": var,
+                        "available_variables": list(variables.keys())
+                    }
+                )
+
+        for rel in relationships:
+            target = rel["target"]
+
+            if target not in variables:
+                raise ContractError(
+                    "UNKNOWN_TARGET_VARIABLE",
+                    {"variable": target}
+                )
+
+    def get_variables(self):
+        return copy.deepcopy(self.variables)
+
+    def get_marginals(self):
+        return copy.deepcopy(self.marginals)
+
+    def get_relationships(self):
+        return copy.deepcopy(self.relationships)
+
+    def get_validation(self):
+        return copy.deepcopy(self.validation)
