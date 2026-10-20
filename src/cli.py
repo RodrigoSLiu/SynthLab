@@ -1,10 +1,9 @@
 from src.llm.ollama_client import OllamaClient
 from src.domain.contract import Contract
-from src.validation.spec_validator import SpecValidator
-from src.validation.dataset_validator import DatasetValidator
-from src.core.errors import SpecValidatorError
-from src.utils.utils import write_generated_code, load_schema, extract_content_from_response, write_generated_yaml, save_dataset_csv, load_dataset_csv
-from src.llm.prompts import create_code_prompt
+from src.domain.parser import Parser
+from src.validation.dataset_validation import DatasetValidator
+from src.errors import ParserError
+from src.utils.utils import Utils
 from src.execution.executor import Executor
 
 from dotenv import load_dotenv
@@ -20,20 +19,20 @@ logger = logging.getLogger(__name__)
 
 async def get_spec_with_retry(
     llm,
-    validator: SpecValidator,
+    spec_parser: Parser,
     schema: Dict[str, Any],
     intent: str,
     retry: int = 1,
 ) -> Dict[str, Any]:
 
     yaml_text: str = ""
-    last_error: Optional[SpecValidatorError] = None
+    last_error: Optional[ParserError] = None
 
     for i in range(retry):
         logger.info("Trying %d/%d...", i + 1, retry)
 
         if last_error is not None:
-            logger.warning("YAML validation failed, re-running...")
+            logger.warning("Spec parsing failed, re-running...")
             llm_spec = await llm.regenerate_spec_from_error(last_error, yaml_text)
         else:
             llm_spec = await llm.generate_spec_from_intent(schema, intent)
@@ -41,20 +40,20 @@ async def get_spec_with_retry(
 
         try:
             logger.info("#### EXTRACTED YAML #####")
-            yaml_text = extract_content_from_response(llm_spec)
+            yaml_text = Utils.extract_content_from_response(llm_spec)
             logger.info(yaml_text)
 
-            logger.info("#### SPEC VALIDATION #####")
-            spec = validator.validate_yaml(yaml_text)
+            logger.info("#### SPEC PARSING #####")
+            spec = spec_parser.parse_yaml(yaml_text)
 
             return spec
 
-        except SpecValidatorError as e:
+        except ParserError as e:
             last_error = e
-            logger.error("Validator raised error: %s", e)
+            logger.error("Parser raised error: %s", e)
 
     # If we reach here, all retries failed
-    raise SpecValidatorError(
+    raise ParserError(
         error_type="SPEC_GENERATION_FAILED",
         details={
             "message": f"Failed after {retry} attempts",
@@ -66,8 +65,8 @@ async def get_spec_with_retry(
 
 
 async def run_pipeline():
-    schema = load_schema("specification.schema.json")
-    spec_validator = SpecValidator(schema)
+    schema = Utils.load_schema("specification.schema.json")
+    spec_parser = Parser(schema)
 
     spec_model_name = os.getenv("SPEC_LLM_MODEL")
     code_model_name = os.getenv("CODE_LLM_MODEL")
@@ -93,30 +92,30 @@ async def run_pipeline():
         with open(f"specs/{args.filename}", "r", encoding="utf-8") as f:
             yaml_text = f.read()
 
-        spec = spec_validator.validate_yaml(yaml_text)
+        spec = spec_parser.parse_yaml(yaml_text)
     else:
-        spec = await get_spec_with_retry(llm, spec_validator, schema, intent, retry=3)
+        spec = await get_spec_with_retry(llm, spec_parser, schema, intent, retry=3)
 
     try:
         logger.info("Writing yaml...")
-        write_generated_yaml(spec, "specs/test.yaml")
+        Utils.write_generated_yaml(spec, "specs/test.yaml")
         contract = Contract.from_spec(spec)
     except ValueError as e:
         logger.error("Spec generation failed: %s", e)
 
     #logger.info("Writing code...")
-    #write_generated_code(code, "experiments/code.py")
+    #Utils.write_generated_code(code, "experiments/code.py")
 
     #logger.info("Executing code...")
     dataframe = executor.execute_spec(contract, 10000, 42)
     logger.info(len(dataframe))
-    save_dataset_csv(dataframe, "experiments/dataset.csv")
+    Utils.save_dataset_csv(dataframe, "experiments/dataset.csv")
 
     
     contract = Contract.from_spec(spec)
     dataset_validator = DatasetValidator(contract)
 
-    df = load_dataset_csv("experiments/dataset.csv")
+    df = Utils.load_dataset_csv("experiments/dataset.csv")
     executor.visualize_data(df)
     validated = dataset_validator.validate_dataset(df)
 

@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 from src.domain.contract import Contract
-from src.utils.utils import load_schema
+from src.utils.utils import Utils
 
 
 @pytest.fixture
@@ -100,6 +100,6 @@ validation:
 @pytest.fixture
 def linear_regression_schema():
     """Load the linear regression JSON schema."""
-    return load_schema("linear_regression.schema.json")
+    return Utils.load_schema("linear_regression.schema.json")
 
 

@@ -1,52 +1,39 @@
 variables:
-  x1:
-    type: continuous
-  x2:
+  x:
     type: continuous
   y:
     type: continuous
 assumptions:
   marginals:
-  - variable: x1
-    generator:
-      name: normal
-      params:
-        mean: 0.0
-        std: 1.0
-  - variable: x2
+  - variable: x
     generator:
       name: uniform
       params:
-        low: -1.0
+        low: 0.0
         high: 1.0
 relationships:
 - target: y
   inputs:
-  - x1
-  - x2
+  - x
   function:
-    name: polynomial
+    name: linear
     params:
       coefficients:
-      - 1.2
-      - 0.8
-      - 2.0
+        x: 2.0
+      intercept: 0.5
+  noise:
+    name: normal
+    params:
+      mean: 0.0
+      std: 0.1
 validation:
 - type: distribution
-  variable: x1
+  variable: x
   test: ks
   alpha: 0.05
-- type: distribution
-  variable: x2
-  test: ks
-  alpha: 0.05
-- type: polynomial
+- type: slope
   target: y
   inputs:
-  - x1
-  - x2
-  expected:
-  - 1.2
-  - 0.8
-  - 2.0
+  - x
+  expected: 2.0
   tolerance: 0.1
