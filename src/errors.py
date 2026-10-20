@@ -37,8 +37,8 @@ class DatasetValidatorError(SynthLabError):
         self.errors = errors
 
 
-class SpecValidatorError(SynthLabError):
-    """Raised when YAML or schema validation fails."""
+class ParserError(SynthLabError):
+    """Raised when spec parsing (YAML, schema or semantics) fails."""
 
     def __init__(self, error_type: str, details: Dict[str, Any]):
         super().__init__(error_type=error_type, details=details)

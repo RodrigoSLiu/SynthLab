@@ -1,6 +1,6 @@
 from src.primitives.distributions import DistributionPrimitive, Normal, Uniform, Exponential, Pareto, Beta, LogNormal, Poisson, Binomial
 from src.primitives.relationships import RelationshipPrimitive, Linear, Polynomial, Logistic, Interaction, PiecewiseLinear
-from src.core.errors import ContractError
+from src.errors import ContractError
 
 
 class Registry:

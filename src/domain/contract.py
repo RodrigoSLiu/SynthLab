@@ -1,5 +1,5 @@
 from typing import Dict, Any, List
-from src.core.errors import ContractError
+from src.errors import ContractError
 
 import copy
 

@@ -2,11 +2,7 @@ import pytest
 import yaml
 from pathlib import Path
 
-from src.utils.utils import (
-    write_generated_yaml,
-    load_schema,
-    load_spec,
-)
+from src.utils.utils import Utils
 
 
 class TestWriteGeneratedYaml:
@@ -16,7 +12,7 @@ class TestWriteGeneratedYaml:
         spec = {"key": "value", "number": 42}
         output_file = tmp_path / "output.yaml"
 
-        write_generated_yaml(spec, output_file)
+        Utils.write_generated_yaml(spec, output_file)
 
         assert output_file.exists()
         loaded = yaml.safe_load(output_file.read_text())
@@ -26,7 +22,7 @@ class TestWriteGeneratedYaml:
         spec = {"test": True}
         output_file = tmp_path / "nested" / "dir" / "output.yaml"
 
-        write_generated_yaml(spec, output_file)
+        Utils.write_generated_yaml(spec, output_file)
 
         assert output_file.exists()
 
@@ -34,31 +30,31 @@ class TestWriteGeneratedYaml:
         output_file = tmp_path / "output.yaml"
 
         with pytest.raises(ValueError, match="empty or invalid"):
-            write_generated_yaml({}, output_file)
+            Utils.write_generated_yaml({}, output_file)
 
     def test_raises_error_for_non_dict(self, tmp_path):
         output_file = tmp_path / "output.yaml"
 
         with pytest.raises(ValueError, match="empty or invalid"):
-            write_generated_yaml("not a dict", output_file)
+            Utils.write_generated_yaml("not a dict", output_file)
 
     def test_raises_error_for_none(self, tmp_path):
         output_file = tmp_path / "output.yaml"
 
         with pytest.raises(ValueError, match="empty or invalid"):
-            write_generated_yaml(None, output_file)
+            Utils.write_generated_yaml(None, output_file)
 
     def test_raises_error_for_non_yaml_extension(self, tmp_path):
         output_file = tmp_path / "output.json"
 
         with pytest.raises(ValueError, match="must be a .yaml file"):
-            write_generated_yaml({"key": "value"}, output_file)
+            Utils.write_generated_yaml({"key": "value"}, output_file)
 
     def test_accepts_string_path(self, tmp_path):
         spec = {"data": [1, 2, 3]}
         output_file = str(tmp_path / "output.yaml")
 
-        write_generated_yaml(spec, output_file)
+        Utils.write_generated_yaml(spec, output_file)
 
         loaded = yaml.safe_load(Path(output_file).read_text())
         assert loaded == spec
@@ -67,7 +63,7 @@ class TestWriteGeneratedYaml:
         spec = {"z": 1, "a": 2, "m": 3}
         output_file = tmp_path / "output.yaml"
 
-        write_generated_yaml(spec, output_file)
+        Utils.write_generated_yaml(spec, output_file)
 
         content = output_file.read_text()
         z_pos = content.find("z:")
@@ -80,7 +76,7 @@ class TestLoadSchema:
     """Tests for load_schema function."""
 
     def test_loads_existing_schema(self):
-        schema = load_schema("specification.schema.json")
+        schema = Utils.load_schema("specification.schema.json")
 
         assert isinstance(schema, dict)
         assert "properties" in schema
@@ -88,10 +84,10 @@ class TestLoadSchema:
 
     def test_raises_error_for_nonexistent_schema(self):
         with pytest.raises(FileNotFoundError):
-            load_schema("nonexistent.schema.json")
+            Utils.load_schema("nonexistent.schema.json")
 
     def test_returns_valid_json_schema(self):
-        schema = load_schema("specification.schema.json")
+        schema = Utils.load_schema("specification.schema.json")
 
         assert "$schema" in schema or "type" in schema
         assert schema.get("type") == "object"
@@ -101,13 +97,13 @@ class TestLoadSpec:
     """Tests for load_spec function."""
 
     def test_loads_existing_spec(self):
-        spec = load_spec("test.yaml")
+        spec = Utils.load_spec("test.yaml")
 
         assert isinstance(spec, dict)
         assert "variables" in spec
 
     def test_raises_error_for_nonexistent_spec(self):
         with pytest.raises(FileNotFoundError):
-            load_spec("nonexistent.yaml")
+            Utils.load_spec("nonexistent.yaml")
 
 
