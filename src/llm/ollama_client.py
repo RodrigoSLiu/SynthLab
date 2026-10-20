@@ -24,6 +24,7 @@ class OllamaClient():
             raise LLMError("User intent is empty")
         
         prompt = create_spec_prompt(schema, intent)
+        print(prompt)
         response = await self._get_llm_response(self.spec_model, prompt)
 
         return response

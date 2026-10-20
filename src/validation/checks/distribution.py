@@ -16,8 +16,8 @@ def run_ks_test(
         raise ValueError("KS test requires a 1D array")
 
     if distribution == "uniform":
-        loc = params["min"]
-        scale = params["max"] - params["min"]
+        loc = params["low"]
+        scale = params["high"] - params["low"]
         cdf = stats.uniform(loc=loc, scale=scale).cdf
 
     elif distribution == "normal":

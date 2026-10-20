@@ -1,4 +1,4 @@
-from src.validation.spec_validator import SpecValidatorError
+from src.errors import ParserError
 
 import logging
 
@@ -11,7 +11,7 @@ def create_code_generation_prompt():
 def add_examples_to_prompt():
     return
 
-def handle_spec_validation_error(e: SpecValidatorError):
+def handle_parser_error(e: ParserError):
     logger.debug(e.details)
 
     return

@@ -1,0 +1,34 @@
+variables:
+  x:
+    type: continuous
+  y:
+    type: continuous
+
+assumptions:
+  marginals:
+    - variable: x
+      generator:
+        name: exponential
+        params:
+          scale: 1.0
+
+relationships:
+  - target: y
+    inputs: [x]
+    function:
+      name: logistic
+      params:
+        slope: 1.0
+        intercept: -2.0
+
+validation:
+  - type: distribution
+    variable: x
+    test: ks
+    alpha: 0.05
+
+  - type: slope
+    target: y
+    inputs: [x]
+    expected: 0.25
+    tolerance: 0.5
